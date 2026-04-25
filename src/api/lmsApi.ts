@@ -70,9 +70,7 @@ export const evaluateSubmission = (submissionId: number, score: number, feedback
 
 // ─── File URL helper ──────────────────────────────────────────────────────────
 
-/** Returns the authenticated URL to stream/view a PDF */
-export const getLmsFileUrl = (filename: string) =>
-  `${BACKEND_BASE}${BASE}/file/${filename}`;
+
 
 // ─── Courses (reused from admin) ──────────────────────────────────────────────
 export const getCourses = () => API.get("/api/admin/courses");
