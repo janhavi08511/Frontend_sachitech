@@ -15,7 +15,7 @@ const BACKEND_BASE = (() => {
     return process.env.REACT_APP_BACKEND_URL;
   }
   // Default to deployed backend
-  return "https://backend-sachitech.onrender.com";
+  return "https://backend-sachitech-latest.onrender.com";
 })();
 
 // ─── Content (Admin / Trainer) ────────────────────────────────────────────────
