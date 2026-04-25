@@ -2,7 +2,7 @@ import { useState } from "react";
 import { X, ExternalLink } from "lucide-react";
 
 interface Props {
-  filename: string; // NOW this is actually a FULL URL
+  filename: string;
   title: string;
   onClose: () => void;
 }
@@ -13,6 +13,9 @@ export function PdfViewerModal({ filename, title, onClose }: Props) {
   const openInNewTab = () => {
     window.open(filename, "_blank");
   };
+
+  // ✅ Google Docs fallback (works everywhere)
+  const viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(filename)}&embedded=true`;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 flex flex-col">
@@ -30,15 +33,21 @@ export function PdfViewerModal({ filename, title, onClose }: Props) {
         </div>
       </div>
 
-      {/* PDF Viewer */}
+      {/* Viewer */}
       <div className="flex-1 bg-gray-800">
         {error ? (
-          <div className="flex items-center justify-center h-full text-white">
-            Failed to load PDF
+          <div className="flex flex-col items-center justify-center h-full text-white gap-4">
+            <p>Preview failed</p>
+            <button
+              onClick={openInNewTab}
+              className="bg-blue-600 px-4 py-2 rounded"
+            >
+              Open in new tab
+            </button>
           </div>
         ) : (
           <iframe
-            src={filename} // ✅ DIRECT CLOUDINARY URL
+            src={viewerUrl} // ✅ safer than direct PDF
             className="w-full h-full"
             onError={() => setError(true)}
           />
