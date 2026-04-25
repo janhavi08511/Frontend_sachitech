@@ -9,17 +9,20 @@ interface Props {
 
 export function PdfViewerModal({ filename, title, onClose }: Props) {
   const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const openInNewTab = () => {
     window.open(filename, "_blank");
   };
 
-  // ✅ Google Docs fallback (works everywhere)
-  const viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(filename)}&embedded=true`;
+  // ✅ Use Google Viewer for reliability
+  const viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(
+    filename
+  )}&embedded=true`;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 flex flex-col">
-      {/* Toolbar */}
+      {/* Header */}
       <div className="flex items-center justify-between bg-gray-900 text-white px-4 py-3">
         <span className="text-sm truncate max-w-lg">{title}</span>
 
@@ -34,10 +37,16 @@ export function PdfViewerModal({ filename, title, onClose }: Props) {
       </div>
 
       {/* Viewer */}
-      <div className="flex-1 bg-gray-800">
+      <div className="flex-1 bg-gray-800 relative">
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center text-white">
+            Loading PDF...
+          </div>
+        )}
+
         {error ? (
           <div className="flex flex-col items-center justify-center h-full text-white gap-4">
-            <p>Preview failed</p>
+            <p>Failed to load PDF</p>
             <button
               onClick={openInNewTab}
               className="bg-blue-600 px-4 py-2 rounded"
@@ -47,9 +56,13 @@ export function PdfViewerModal({ filename, title, onClose }: Props) {
           </div>
         ) : (
           <iframe
-            src={viewerUrl} // ✅ safer than direct PDF
+            src={viewerUrl}
             className="w-full h-full"
-            onError={() => setError(true)}
+            onLoad={() => setLoading(false)}
+            onError={() => {
+              setError(true);
+              setLoading(false);
+            }}
           />
         )}
       </div>
