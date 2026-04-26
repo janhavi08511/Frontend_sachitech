@@ -17,9 +17,8 @@ import {
 
 import {
   getUsers, createUser, deleteUser,
-  createStudentProfile, createTrainerProfile,
-  resetPassword, enrollStudentWithInitialPayment,
-  recordTrainerPayment
+
+  resetPassword, 
 } from "../../api/userapi";
 
 import { getCourses } from "../../api/courseApi";
@@ -73,7 +72,7 @@ export function UserManagement() {
       ? list.filter(v => v !== value)
       : [...list, value];
 
-<<<<<<< HEAD
+
   const handleCreate = async () => {
   if (!form.name || !form.email || !form.password) {
     toast.error("Name, Email, Password required");
@@ -116,7 +115,7 @@ export function UserManagement() {
   }
 };
       
-=======
+
   // 🚀 MAIN CREATE FUNCTION (FIXED)
   const handleCreate = async () => {
     if (!form.name || !form.email || !form.password) {
