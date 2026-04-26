@@ -4,7 +4,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Checkbox } from "../ui/checkbox";
 import { toast } from "sonner";
-
+import { createFullUser } from "../../api/userapi";
 import {
   Table, TableBody, TableCell, TableHead,
   TableHeader, TableRow
@@ -16,7 +16,7 @@ import {
 } from "../ui/dialog";
 
 import {
-  getUsers, createUser, deleteUser,
+  getUsers,  deleteUser,
 
   resetPassword, 
 } from "../../api/userapi";
@@ -72,28 +72,22 @@ export function UserManagement() {
       ? list.filter(v => v !== value)
       : [...list, value];
 
-
-  const handleCreate = async () => {
+const handleCreate = async () => {
   if (!form.name || !form.email || !form.password) {
     toast.error("Name, Email, Password required");
     return;
   }
 
   try {
-
     await createFullUser({
       name: form.name,
       email: form.email,
       password: form.password,
       role: form.role,
-
       phone: form.phone,
       admissionDate: form.admissionDate,
-
       courseIds: form.courses.map(c => parseInt(c)),
-
       initialPayment: parseFloat(form.initialPayment || "0"),
-
       specialization: form.specialization,
       salary: parseFloat(form.salary || "0")
     });
@@ -103,10 +97,17 @@ export function UserManagement() {
     fetchData();
 
     setForm({
-      name: "", email: "", password: "", role: "STUDENT",
-      phone: "", specialization: "",
-      courses: [], internships: [],
-      admissionDate: "", initialPayment: "", salary: ""
+      name: "",
+      email: "",
+      password: "",
+      role: "STUDENT",
+      phone: "",
+      specialization: "",
+      courses: [],
+      internships: [],
+      admissionDate: "",
+      initialPayment: "",
+      salary: ""
     });
 
   } catch (err: any) {
@@ -114,100 +115,6 @@ export function UserManagement() {
     toast.error(msg);
   }
 };
-      
-
-  // 🚀 MAIN CREATE FUNCTION (FIXED)
-  const handleCreate = async () => {
-    if (!form.name || !form.email || !form.password) {
-      toast.error("Name, Email, Password required");
-      return;
-    }
-
-    try {
-      // 1. CREATE USER
-      const userRes = await createUser({
-        name: form.name,
-        email: form.email,
-        password: form.password,
-        role: form.role
-      });
-
-      const userId = userRes?.data?.id;
-
-      // ======================
-      // STUDENT FLOW
-      // ======================
-      if (form.role === "STUDENT" && userId) {
-
-        const profileRes = await createStudentProfile({
-          user: { id: userId },
-          phone: form.phone,
-          course: form.courses.join(","), // backend expects string
-          admissionDate: form.admissionDate || null
-        });
-
-        const studentId = profileRes?.data?.id;
-
-        if (form.initialPayment && studentId && form.courses.length > 0) {
-          await enrollStudentWithInitialPayment({
-            studentId: studentId,
-            courseId: parseInt(form.courses[0]),
-            initialPayment: parseFloat(form.initialPayment)
-          });
-        }
-      }
-
-      // ======================
-      // TRAINER FLOW
-      // ======================
-      if (form.role === "TRAINER" && userId) {
-
-        const trainerRes = await createTrainerProfile({
-          user: { id: userId },
-          phone: form.phone,
-          specialization: form.specialization
-        });
-
-        const trainerProfileId = trainerRes?.data?.id;
-
-        // assign courses + internships
-        if (trainerProfileId) {
-          await updateTrainerProfile(trainerProfileId, {
-            courseIds: form.courses.map(c => parseInt(c)),
-            internshipIds: form.internships.map(i => parseInt(i))
-          });
-        }
-
-        // salary (optional)
-        if (form.salary) {
-          await recordTrainerPayment({
-            trainerId: userId, // IMPORTANT FIX
-            amount: parseFloat(form.salary),
-            paymentMode: "CASH",
-            paymentDate: new Date().toISOString().split("T")[0],
-            remarks: "Initial salary"
-          });
-        }
-      }
-
-      toast.success("User created successfully");
-      setOpen(false);
-      fetchData();
-
-      setForm({
-        name: "", email: "", password: "", role: "STUDENT",
-        phone: "", specialization: "",
-        courses: [], internships: [],
-        admissionDate: "", initialPayment: "", salary: ""
-      });
-
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || "Error creating user";
-      toast.error(msg);
-    }
-  };
->>>>>>> f70c04d14eab9694cb26a8dd781eb875cee3f263
-
   const handleDelete = async (id: number) => {
     await deleteUser(id);
     toast.success("Deleted");
