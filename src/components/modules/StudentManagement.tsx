@@ -143,7 +143,7 @@ export function StudentManagement({ role }: Props) {
                       No students found
                     </TableCell>
                   </TableRow>
-                ) : [...filtered].reverse().map((s) => {
+                ) : filtered.map((s) => {
 
                     const fee = feeMap[s.id];
                     const progress = fee && fee.totalFeeAtEnrollment > 0

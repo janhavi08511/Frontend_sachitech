@@ -421,7 +421,7 @@ export function FeeManagement() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    [...feeRecords].reverse().map(r => {
+                    feeRecords.map(r => {
                       const pct = r.totalFeeAtEnrollment > 0
                         ? Math.round((r.amountPaid / r.totalFeeAtEnrollment) * 100)
                         : 0;
@@ -514,7 +514,7 @@ export function FeeManagement() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    [...transactions].reverse().map(t => (
+                    transactions.map(t => (
                       <TableRow key={t.transactionId}>
                         <TableCell className="font-mono text-xs text-muted-foreground">
                           <Receipt className="w-3 h-3 inline mr-1" />

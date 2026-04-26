@@ -137,6 +137,8 @@ const handleCreate = async () => {
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
+                <TableHead>Phone</TableHead>
+                <TableHead>Course / Specialization</TableHead>
                 <TableHead>Action</TableHead>
               </TableRow>
             </TableHeader>
@@ -147,6 +149,8 @@ const handleCreate = async () => {
                   <TableCell>{u.name}</TableCell>
                   <TableCell>{u.email}</TableCell>
                   <TableCell>{u.role}</TableCell>
+                  <TableCell>{u.phone || "N/A"}</TableCell>
+                  <TableCell>{u.course || u.specialization || "N/A"}</TableCell>
                   <TableCell>
                     <Button
                       variant="destructive"
@@ -202,6 +206,10 @@ const handleCreate = async () => {
                 <Input placeholder="Phone"
                   value={form.phone}
                   onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))} />
+
+                <Input type="date" placeholder="Admission Date"
+                  value={form.admissionDate}
+                  onChange={(e) => setForm(f => ({ ...f, admissionDate: e.target.value }))} />
 
                 <Input type="number" placeholder="Initial Payment"
                   value={form.initialPayment}
