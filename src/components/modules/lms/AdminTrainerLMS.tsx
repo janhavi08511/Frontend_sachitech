@@ -35,12 +35,34 @@ export function AdminTrainerLMS({ role }: any) {
   const [contentList, setContentList] = useState<any[]>([]);
   const [pdfViewer, setPdfViewer] = useState<any>(null);
 
+  // ✅ LOAD COURSES + INTERNSHIPS
   useEffect(() => {
     const fetch = role === "trainer" ? getTrainerCourses : getCourses;
     fetch().then((r) => setCourses(r.data || r));
     getInternships().then((r) => setInternships(r.data || r));
-  }, []);
+  }, [role]);
 
+  // ✅ LOAD CONTENT FUNCTION (FIXED POSITION)
+  const loadContent = async () => {
+    if (!selectedCourseId) return;
+
+    try {
+      const res = await getContentByCourse(selectedCourseId);
+      setContentList(res.data || res);
+    } catch (e) {
+      console.error(e);
+      alert("Failed to load content");
+    }
+  };
+
+  // ✅ AUTO LOAD WHEN COURSE CHANGES
+  useEffect(() => {
+    if (selectedCourseId) {
+      loadContent();
+    }
+  }, [selectedCourseId]);
+
+  // ✅ UPLOAD
   const handleUpload = async () => {
     if (!uploadTitle || !uploadFile) return alert("Fill all fields");
 
@@ -59,7 +81,11 @@ export function AdminTrainerLMS({ role }: any) {
     setUploading(true);
     await uploadLmsContent(fd);
     setUploading(false);
+
     alert("Uploaded successfully");
+
+    // 🔥 reload content after upload
+    loadContent();
   };
 
   const openPdf = (url: string, title: string) => {
@@ -81,19 +107,47 @@ export function AdminTrainerLMS({ role }: any) {
         <Button onClick={() => setActiveTab("upload")}>Upload</Button>
       </div>
 
-      {/* CONTENT */}
+      {/* ================= CONTENT ================= */}
       {activeTab === "content" && (
         <div className="space-y-4">
-          {contentList.map((c) => (
-            <div key={c.id} className="bg-white p-4 rounded-xl shadow flex justify-between">
-              <span>{c.title}</span>
-              <Button onClick={() => openPdf(c.fileUrl, c.title)}>View</Button>
-            </div>
-          ))}
+
+          {/* SELECT COURSE */}
+          <div className="flex gap-3 items-center">
+            <select
+              className="border p-2 rounded"
+              value={selectedCourseId}
+              onChange={(e) => setSelectedCourseId(Number(e.target.value))}
+            >
+              <option value="">Select Course</option>
+              {courses.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+
+            <Button onClick={loadContent}>Refresh</Button>
+          </div>
+
+          {/* CONTENT LIST */}
+          {contentList.length === 0 ? (
+            <p className="text-gray-400">No content found</p>
+          ) : (
+            contentList.map((c) => (
+              <div key={c.id} className="bg-white p-4 rounded-xl shadow flex justify-between">
+                <div>
+                  <p className="font-semibold">{c.title}</p>
+                  <p className="text-xs text-gray-400">{c.type}</p>
+                </div>
+                <Button onClick={() => openPdf(c.fileUrl, c.title)}>
+                  View
+                </Button>
+              </div>
+            ))
+          )}
+
         </div>
       )}
 
-      {/* UPLOAD */}
+      {/* ================= UPLOAD ================= */}
       {activeTab === "upload" && (
         <div className="max-w-4xl mx-auto bg-white p-6 rounded-2xl shadow space-y-6">
 
@@ -118,16 +172,20 @@ export function AdminTrainerLMS({ role }: any) {
             </select>
           </div>
 
-          {/* SELECT */}
+          {/* SELECT COURSE / INTERNSHIP */}
           {uploadTarget === "course" ? (
             <select onChange={(e) => setUploadCourseId(Number(e.target.value))}>
               <option>Select Course</option>
-              {courses.map((c) => <option key={c.id}>{c.name}</option>)}
+              {courses.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
             </select>
           ) : (
             <select onChange={(e) => setUploadInternshipId(Number(e.target.value))}>
               <option>Select Internship</option>
-              {internships.map((i) => <option key={i.id}>{i.name}</option>)}
+              {internships.map((i) => (
+                <option key={i.id} value={i.id}>{i.name}</option>
+              ))}
             </select>
           )}
 
@@ -153,6 +211,7 @@ export function AdminTrainerLMS({ role }: any) {
         </div>
       )}
 
+      {/* PDF VIEWER */}
       {pdfViewer && (
         <PdfViewerModal
           filename={pdfViewer.filename}
@@ -160,6 +219,7 @@ export function AdminTrainerLMS({ role }: any) {
           onClose={() => setPdfViewer(null)}
         />
       )}
+
     </div>
   );
 }
