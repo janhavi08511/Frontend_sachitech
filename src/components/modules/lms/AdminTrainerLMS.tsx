@@ -1,143 +1,89 @@
-// FULL CLEAN FILE
-
 import { useEffect, useRef, useState } from "react";
 import {
   getCourses,
-  getInternships,
   uploadLmsContent,
   getContentByCourse,
   getAllSubmissions,
   evaluateSubmission,
   getTrainerCourses,
-  getTrainerInternships,
-  type LmsContent,
-  type LmsSubmission,
 } from "../../../api/lmsApi";
 
 import { Card, CardContent } from "../../ui/card";
-import { Badge } from "../../ui/badge";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
 import { Textarea } from "../../ui/textarea";
 import { PdfViewerModal } from "./PdfViewerModal";
 
-import {
-  Upload,
-  FileText,
-  ClipboardList,
-  BookOpen,
-  Eye,
-  CheckCircle,
-} from "lucide-react";
-
-import { UserRole } from "../../../types";
-
-interface Props {
-  role: UserRole;
-}
-
 type Tab = "content" | "upload" | "evaluate";
 
-export function AdminTrainerLMS({ role }: Props) {
+export function AdminTrainerLMS({ role }: any) {
   const [activeTab, setActiveTab] = useState<Tab>("content");
 
   const [courses, setCourses] = useState<any[]>([]);
-  const [internships, setInternships] = useState<any[]>([]);
-
   const [uploadTitle, setUploadTitle] = useState("");
-  const [uploadType, setUploadType] = useState<"ASSIGNMENT" | "NOTE">("ASSIGNMENT");
   const [uploadCourseId, setUploadCourseId] = useState<number | "">("");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadSuccess, setUploadSuccess] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [selectedCourseId, setSelectedCourseId] = useState<number | "">("");
-  const [contentList, setContentList] = useState<LmsContent[]>([]);
-  const [contentLoading, setContentLoading] = useState(false);
+  const [contentList, setContentList] = useState<any[]>([]);
 
-  const [submissions, setSubmissions] = useState<LmsSubmission[]>([]);
-  const [evaluatingId, setEvaluatingId] = useState<number | null>(null);
-  const [evalScore, setEvalScore] = useState("");
-  const [evalFeedback, setEvalFeedback] = useState("");
-
+  const [submissions, setSubmissions] = useState<any[]>([]);
   const [pdfViewer, setPdfViewer] = useState<any>(null);
 
   useEffect(() => {
-    const fetchCourses = role === "trainer" ? getTrainerCourses : getCourses;
-    fetchCourses().then((r) => setCourses(Array.isArray(r) ? r : r.data));
-  }, [role]);
+    const fetch = role === "trainer" ? getTrainerCourses : getCourses;
+    fetch().then((r) => setCourses(r.data || r));
+  }, []);
 
   const handleUpload = async () => {
-    if (!uploadFile || !uploadTitle || !uploadCourseId) return alert("Fill all fields");
-
     const fd = new FormData();
-    fd.append("file", uploadFile);
+    fd.append("file", uploadFile!);
     fd.append("title", uploadTitle);
-    fd.append("type", uploadType);
     fd.append("courseId", String(uploadCourseId));
 
     setUploading(true);
-    try {
-      await uploadLmsContent(fd);
-      setUploadSuccess(true);
-      setUploadTitle("");
-      setUploadFile(null);
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const loadContent = async () => {
-    if (!selectedCourseId) return;
-    setContentLoading(true);
-    const res = await getContentByCourse(Number(selectedCourseId));
-    setContentList(Array.isArray(res) ? res : res.data);
-    setContentLoading(false);
-  };
-
-  useEffect(() => {
-    if (selectedCourseId) loadContent();
-  }, [selectedCourseId]);
-
-  useEffect(() => {
-    if (activeTab === "evaluate") {
-      getAllSubmissions().then((r) =>
-        setSubmissions(Array.isArray(r) ? r : r.data)
-      );
-    }
-  }, [activeTab]);
-
-  const openPdf = (url: string, title: string) => {
-    setPdfViewer({ filename: url, title });
+    await uploadLmsContent(fd);
+    setUploading(false);
   };
 
   return (
     <div className="space-y-6">
 
-      <h2 className="text-2xl font-bold">LMS</h2>
+      {/* PREMIUM HEADER */}
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 rounded-2xl text-white shadow">
+        <h2 className="text-2xl font-bold">Learning Management System</h2>
+        <p className="text-sm opacity-80">Upload, manage and evaluate content</p>
+      </div>
 
-      <div className="flex gap-3">
-        <Button onClick={() => setActiveTab("content")}>Content</Button>
-        <Button onClick={() => setActiveTab("upload")}>Upload</Button>
-        <Button onClick={() => setActiveTab("evaluate")}>Evaluate</Button>
+      {/* TABS */}
+      <div className="flex gap-3 bg-white p-2 rounded-xl shadow w-fit">
+        {["content", "upload", "evaluate"].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab as Tab)}
+            className={`px-4 py-2 rounded-lg ${
+              activeTab === tab
+                ? "bg-blue-600 text-white"
+                : "text-gray-500 hover:bg-gray-100"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
       </div>
 
       {/* CONTENT */}
       {activeTab === "content" && (
-        <div>
-          <select onChange={(e) => setSelectedCourseId(Number(e.target.value))}>
-            <option>Select Course</option>
-            {courses.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-
+        <div className="grid gap-4">
           {contentList.map((c) => (
-            <div key={c.id} className="flex justify-between p-3 border">
-              <span>{c.title}</span>
-              <Button onClick={() => openPdf(c.fileUrl, c.title)}>View</Button>
+            <div key={c.id} className="bg-white p-4 rounded-xl shadow flex justify-between">
+              <p>{c.title}</p>
+              <Button onClick={() => setPdfViewer({ filename: c.fileUrl, title: c.title })}>
+                View
+              </Button>
             </div>
           ))}
         </div>
@@ -145,46 +91,48 @@ export function AdminTrainerLMS({ role }: Props) {
 
       {/* UPLOAD */}
       {activeTab === "upload" && (
-        <div className="max-w-xl">
-          <Input placeholder="Title" value={uploadTitle} onChange={(e) => setUploadTitle(e.target.value)} />
+        <Card className="rounded-2xl shadow">
+          <CardContent className="p-6 space-y-4">
 
-          <select onChange={(e) => setUploadCourseId(Number(e.target.value))}>
-            <option>Select Course</option>
-            {courses.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
+            <Input
+              placeholder="Title"
+              value={uploadTitle}
+              onChange={(e) => setUploadTitle(e.target.value)}
+            />
 
-          <input type="file" onChange={(e) => setUploadFile(e.target.files?.[0] || null)} />
+            <select
+              className="border p-2 rounded"
+              onChange={(e) => setUploadCourseId(Number(e.target.value))}
+            >
+              <option>Select Course</option>
+              {courses.map((c) => (
+                <option key={c.id}>{c.name}</option>
+              ))}
+            </select>
 
-          <Button onClick={handleUpload}>
-            {uploading ? "Uploading..." : "Upload"}
-          </Button>
-
-          {uploadSuccess && <p className="text-green-600">Uploaded!</p>}
-        </div>
-      )}
-
-      {/* EVALUATE */}
-      {activeTab === "evaluate" && (
-        <div>
-          {submissions.map((s) => (
-            <div key={s.id} className="border p-3">
-              <p>{s.studentName}</p>
-              <Button onClick={() => openPdf(s.fileUrl, "Submission")}>View</Button>
-
-              <Input placeholder="Score" onChange={(e) => setEvalScore(e.target.value)} />
-              <Textarea placeholder="Feedback" onChange={(e) => setEvalFeedback(e.target.value)} />
-
-              <Button onClick={() => evaluateSubmission(s.id, Number(evalScore), evalFeedback)}>
-                Submit
-              </Button>
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="border-dashed border-2 p-8 text-center rounded-xl cursor-pointer"
+            >
+              {uploadFile ? uploadFile.name : "Click to upload PDF"}
             </div>
-          ))}
-        </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+            />
+
+            <Button onClick={handleUpload}>
+              {uploading ? "Uploading..." : "Upload"}
+            </Button>
+
+          </CardContent>
+        </Card>
       )}
 
-      {/* PDF MODAL */}
+      {/* PDF */}
       {pdfViewer && (
         <PdfViewerModal
           filename={pdfViewer.filename}
@@ -192,7 +140,6 @@ export function AdminTrainerLMS({ role }: Props) {
           onClose={() => setPdfViewer(null)}
         />
       )}
-
     </div>
   );
 }

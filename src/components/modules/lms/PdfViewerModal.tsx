@@ -15,7 +15,7 @@ export function PdfViewerModal({ filename, title, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 flex flex-col">
+    <div className="fixed inset-0 z-50 bg-black/80 flex flex-col animate-fade-in">
       
       {/* Header */}
       <div className="flex items-center justify-between bg-gray-900 text-white px-4 py-3">
