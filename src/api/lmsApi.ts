@@ -2,22 +2,6 @@ import API from "./axios";
 
 const BASE = "/api/lms";
 
-// ✅ UPDATED: Support both local and deployed backends
-// For local development: http://localhost:8080
-// For production: https://backend-sachitech.onrender.com
-const BACKEND_BASE = (() => {
-  // Check if we're in development mode
-  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-    return "http://localhost:8080";
-  }
-  // Use environment variable if available
-  if (typeof process !== 'undefined' && process.env.REACT_APP_BACKEND_URL) {
-    return process.env.REACT_APP_BACKEND_URL;
-  }
-  // Default to deployed backend
-  return "https://backend-sachitech-latest.onrender.com";
-})();
-
 // ─── Content (Admin / Trainer) ────────────────────────────────────────────────
 
 /** Upload a PDF assignment or note */
@@ -26,11 +10,11 @@ export const uploadLmsContent = (formData: FormData) =>
     headers: { "Content-Type": "multipart/form-data" },
   });
 
-/** Get all content for a course (admin/trainer: all; student: enrolled only) */
+/** Get all content for a course */
 export const getContentByCourse = (courseId: number) =>
   API.get<LmsContent[]>(`${BASE}/content/${courseId}`);
 
-/** Get all content for an internship (admin/trainer only) */
+/** Get all content for an internship */
 export const getContentByInternship = (internshipId: number) =>
   API.get<LmsContent[]>(`${BASE}/internship-content/${internshipId}`);
 
@@ -68,10 +52,6 @@ export const getSubmissionsForAssignment = (assignmentId: number) =>
 export const evaluateSubmission = (submissionId: number, score: number, feedback: string) =>
   API.put<LmsSubmission>(`${BASE}/evaluate/${submissionId}`, { score, feedback });
 
-// ─── File URL helper ──────────────────────────────────────────────────────────
-
-
-
 // ─── Courses (reused from admin) ──────────────────────────────────────────────
 export const getCourses = () => API.get("/api/admin/courses");
 export const getInternships = () => API.get("/api/admin/internships");
@@ -81,7 +61,7 @@ export const getTrainerCourses = () => API.get<any[]>(`${BASE}/trainer/courses`)
 export const getTrainerInternships = () => API.get<any[]>(`${BASE}/trainer/internships`);
 export const getTrainerSubmissions = () => API.get<LmsSubmission[]>(`${BASE}/trainer/submissions`);
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Types (flat DTO structure — matches backend Map responses) ───────────────
 
 export interface LmsContent {
   id: number;
@@ -89,21 +69,26 @@ export interface LmsContent {
   type: "ASSIGNMENT" | "NOTE";
   fileUrl: string;
   uploadDate: string;
-  course?: { id: number; name: string };
-  internship?: { id: number; name: string };
-  uploadedBy?: { id: number; name: string; email: string };
+  courseId?: number;
+  courseName?: string;
+  internshipId?: number;
+  internshipName?: string;
+  uploadedById?: number;
+  uploadedByName?: string;
 }
 
 export interface LmsSubmission {
   id: number;
-  assignment: LmsContent;
-  student: {
-    id: number;
-    user: { id: number; name: string; email: string };
-  };
   fileUrl: string;
   submissionDate: string;
   status: "PENDING" | "SUBMITTED" | "EVALUATED";
   score?: number;
   feedback?: string;
+  assignmentId?: number;
+  assignmentTitle?: string;
+  assignmentType?: string;
+  courseName?: string;
+  studentId?: number;
+  studentName?: string;
+  studentEmail?: string;
 }

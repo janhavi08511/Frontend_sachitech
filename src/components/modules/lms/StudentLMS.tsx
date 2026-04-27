@@ -62,7 +62,7 @@ export function StudentLMS() {
   const notes = content.filter((c) => c.type === "NOTE");
 
   const getSubmissionForAssignment = (assignmentId: number) =>
-    submissions.find((s) => s.assignment?.id === assignmentId);
+    submissions.find((s) => s.assignmentId === assignmentId);
 
   const handleSubmit = async (assignmentId: number) => {
     if (!submitFile) {
@@ -74,7 +74,7 @@ export function StudentLMS() {
       const res = await submitAssignment(assignmentId, submitFile);
       // Optimistic update
       setSubmissions((prev) => {
-        const existing = prev.findIndex((s) => s.assignment?.id === assignmentId);
+        const existing = prev.findIndex((s) => s.assignmentId === assignmentId);
         if (existing >= 0) {
           const updated = [...prev];
           updated[existing] = res.data;
@@ -184,7 +184,7 @@ export function StudentLMS() {
                       <div className="min-w-0">
                         <p className="font-semibold text-gray-800 text-sm truncate">{item.title}</p>
                         <p className="text-xs text-gray-400 mt-0.5">
-                          {item.course?.name || item.internship?.name} · {new Date(item.uploadDate).toLocaleDateString()}
+                          {item.courseName || item.internshipName || ""} · {item.uploadDate ? new Date(item.uploadDate).toLocaleDateString() : ""}
                         </p>
                         {sub?.status === "EVALUATED" && sub.feedback && (
                           <p className="text-xs text-green-700 mt-1 italic">"{sub.feedback}"</p>
@@ -275,7 +275,7 @@ export function StudentLMS() {
                   <div>
                     <p className="font-semibold text-gray-800 text-sm">{item.title}</p>
                     <p className="text-xs text-gray-400 mt-0.5">
-                      {item.course?.name || item.internship?.name} · {new Date(item.uploadDate).toLocaleDateString()}
+                      {item.courseName || item.internshipName || ""} · {item.uploadDate ? new Date(item.uploadDate).toLocaleDateString() : ""}
                     </p>
                   </div>
                 </div>
@@ -308,7 +308,7 @@ export function StudentLMS() {
                         : <Clock className="w-5 h-5 text-blue-600" />}
                     </div>
                     <div className="min-w-0">
-                      <p className="font-semibold text-gray-800 text-sm truncate">{sub.assignment?.title}</p>
+                      <p className="font-semibold text-gray-800 text-sm truncate">{sub.assignmentTitle || "Assignment"}</p>
                       <p className="text-xs text-gray-400 mt-0.5">
                         Submitted: {sub.submissionDate ? new Date(sub.submissionDate).toLocaleString() : "—"}
                       </p>
@@ -325,7 +325,7 @@ export function StudentLMS() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => setPdfViewer({ filename: sub.fileUrl, title: `My submission – ${sub.assignment?.title}` })}
+                      onClick={() => setPdfViewer({ filename: sub.fileUrl, title: `My submission – ${sub.assignmentTitle || "Assignment"}` })}
                     >
                       <Eye className="w-4 h-4 mr-1" /> View
                     </Button>

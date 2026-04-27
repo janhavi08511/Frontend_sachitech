@@ -1,3 +1,5 @@
+// FULL CLEAN FILE
+
 import { useEffect, useRef, useState } from "react";
 import {
   getCourses,
@@ -12,7 +14,7 @@ import {
   type LmsSubmission,
 } from "../../../api/lmsApi";
 
-import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
+import { Card, CardContent } from "../../ui/card";
 import { Badge } from "../../ui/badge";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
@@ -24,9 +26,8 @@ import {
   FileText,
   ClipboardList,
   BookOpen,
-  X,
-  CheckCircle,
   Eye,
+  CheckCircle,
 } from "lucide-react";
 
 import { UserRole } from "../../../types";
@@ -35,7 +36,7 @@ interface Props {
   role: UserRole;
 }
 
-type Tab = "upload" | "content" | "evaluate";
+type Tab = "content" | "upload" | "evaluate";
 
 export function AdminTrainerLMS({ role }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>("content");
@@ -45,9 +46,7 @@ export function AdminTrainerLMS({ role }: Props) {
 
   const [uploadTitle, setUploadTitle] = useState("");
   const [uploadType, setUploadType] = useState<"ASSIGNMENT" | "NOTE">("ASSIGNMENT");
-  const [uploadTarget, setUploadTarget] = useState<"course" | "internship">("course");
   const [uploadCourseId, setUploadCourseId] = useState<number | "">("");
-  const [uploadInternshipId, setUploadInternshipId] = useState<number | "">("");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
@@ -59,150 +58,67 @@ export function AdminTrainerLMS({ role }: Props) {
   const [contentLoading, setContentLoading] = useState(false);
 
   const [submissions, setSubmissions] = useState<LmsSubmission[]>([]);
-  const [subLoading, setSubLoading] = useState(false);
-
-  const [evaluating, setEvaluating] = useState<number | null>(null);
+  const [evaluatingId, setEvaluatingId] = useState<number | null>(null);
   const [evalScore, setEvalScore] = useState("");
   const [evalFeedback, setEvalFeedback] = useState("");
 
-  const [pdfViewer, setPdfViewer] = useState<{ filename: string; title: string } | null>(null);
+  const [pdfViewer, setPdfViewer] = useState<any>(null);
 
-  // ─────────────────────────────────────────────
-  // LOAD COURSES & INTERNSHIPS
-  // ─────────────────────────────────────────────
   useEffect(() => {
     const fetchCourses = role === "trainer" ? getTrainerCourses : getCourses;
-    const fetchInternships = role === "trainer" ? getTrainerInternships : getInternships;
-
-    fetchCourses()
-      .then((r) => {
-        const data = Array.isArray(r) ? r : r.data;
-        setCourses(data || []);
-      })
-      .catch(() => setCourses([]));
-
-    fetchInternships()
-      .then((r) => {
-        const data = Array.isArray(r) ? r : r.data;
-        setInternships(data || []);
-      })
-      .catch(() => setInternships([]));
+    fetchCourses().then((r) => setCourses(Array.isArray(r) ? r : r.data));
   }, [role]);
 
-  // ─────────────────────────────────────────────
-  // UPLOAD
-  // ─────────────────────────────────────────────
   const handleUpload = async () => {
-    if (!uploadFile || !uploadTitle.trim()) {
-      alert("Fill all fields");
-      return;
-    }
+    if (!uploadFile || !uploadTitle || !uploadCourseId) return alert("Fill all fields");
 
     const fd = new FormData();
     fd.append("file", uploadFile);
     fd.append("title", uploadTitle);
     fd.append("type", uploadType);
-
-    if (uploadTarget === "course") fd.append("courseId", String(uploadCourseId));
-    else fd.append("internshipId", String(uploadInternshipId));
+    fd.append("courseId", String(uploadCourseId));
 
     setUploading(true);
-
     try {
       await uploadLmsContent(fd);
-
       setUploadSuccess(true);
       setUploadTitle("");
       setUploadFile(null);
-
-      if (fileInputRef.current) fileInputRef.current.value = "";
-
-      setTimeout(() => setUploadSuccess(false), 3000);
-    } catch {
-      alert("Upload failed");
     } finally {
       setUploading(false);
     }
   };
 
-  // ─────────────────────────────────────────────
-  // LOAD CONTENT
-  // ─────────────────────────────────────────────
   const loadContent = async () => {
     if (!selectedCourseId) return;
-
     setContentLoading(true);
-    try {
-      const res = await getContentByCourse(Number(selectedCourseId));
-      setContentList(Array.isArray(res) ? res : res.data || []);
-    } catch {
-      setContentList([]);
-    } finally {
-      setContentLoading(false);
-    }
+    const res = await getContentByCourse(Number(selectedCourseId));
+    setContentList(Array.isArray(res) ? res : res.data);
+    setContentLoading(false);
   };
 
   useEffect(() => {
     if (selectedCourseId) loadContent();
   }, [selectedCourseId]);
 
-  // ─────────────────────────────────────────────
-  // LOAD SUBMISSIONS
-  // ─────────────────────────────────────────────
   useEffect(() => {
     if (activeTab === "evaluate") {
-      setSubLoading(true);
-
-      getAllSubmissions()
-        .then((r) => {
-          setSubmissions(Array.isArray(r) ? r : r.data || []);
-        })
-        .finally(() => setSubLoading(false));
+      getAllSubmissions().then((r) =>
+        setSubmissions(Array.isArray(r) ? r : r.data)
+      );
     }
   }, [activeTab]);
 
-  // ─────────────────────────────────────────────
-  // EVALUATE
-  // ─────────────────────────────────────────────
-  const handleEvaluate = async (id: number) => {
-    const score = parseFloat(evalScore);
-    if (isNaN(score)) return alert("Invalid score");
-
-    try {
-      const res = await evaluateSubmission(id, score, evalFeedback);
-      const updated = Array.isArray(res) ? res[0] : res.data;
-
-      setSubmissions((prev) =>
-        prev.map((s) => (s.id === id ? updated : s))
-      );
-
-      setEvaluating(null);
-    } catch {
-      alert("Failed");
-    }
-  };
-
-  // ─────────────────────────────────────────────
-  // SAFE PDF OPEN
-  // ─────────────────────────────────────────────
   const openPdf = (url: string, title: string) => {
-    if (!url || !url.startsWith("http")) {
-      alert("Invalid file");
-      return;
-    }
-
     setPdfViewer({ filename: url, title });
   };
 
-  // ─────────────────────────────────────────────
   return (
     <div className="space-y-6">
 
-      {/* HEADER */}
-      <h2 className="text-xl font-bold">LMS</h2>
+      <h2 className="text-2xl font-bold">LMS</h2>
 
-      {/* TABS */}
-      <div className="flex gap-4">
+      <div className="flex gap-3">
         <Button onClick={() => setActiveTab("content")}>Content</Button>
         <Button onClick={() => setActiveTab("upload")}>Upload</Button>
         <Button onClick={() => setActiveTab("evaluate")}>Evaluate</Button>
@@ -210,80 +126,62 @@ export function AdminTrainerLMS({ role }: Props) {
 
       {/* CONTENT */}
       {activeTab === "content" && (
-        <>
-          <select
-            value={selectedCourseId}
-            onChange={(e) => setSelectedCourseId(Number(e.target.value))}
-          >
+        <div>
+          <select onChange={(e) => setSelectedCourseId(Number(e.target.value))}>
             <option>Select Course</option>
             {courses.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
+              <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
 
           {contentList.map((c) => (
-            <div key={c.id} className="flex justify-between">
+            <div key={c.id} className="flex justify-between p-3 border">
               <span>{c.title}</span>
-              <Button onClick={() => openPdf(c.fileUrl, c.title)}>
-                View
-              </Button>
+              <Button onClick={() => openPdf(c.fileUrl, c.title)}>View</Button>
             </div>
           ))}
-        </>
+        </div>
       )}
 
       {/* UPLOAD */}
       {activeTab === "upload" && (
-        <div>
-          <Input
-            placeholder="Title"
-            value={uploadTitle}
-            onChange={(e) => setUploadTitle(e.target.value)}
-          />
+        <div className="max-w-xl">
+          <Input placeholder="Title" value={uploadTitle} onChange={(e) => setUploadTitle(e.target.value)} />
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
-          />
+          <select onChange={(e) => setUploadCourseId(Number(e.target.value))}>
+            <option>Select Course</option>
+            {courses.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+
+          <input type="file" onChange={(e) => setUploadFile(e.target.files?.[0] || null)} />
 
           <Button onClick={handleUpload}>
             {uploading ? "Uploading..." : "Upload"}
           </Button>
+
+          {uploadSuccess && <p className="text-green-600">Uploaded!</p>}
         </div>
       )}
 
       {/* EVALUATE */}
       {activeTab === "evaluate" && (
-        <>
+        <div>
           {submissions.map((s) => (
-            <div key={s.id}>
-              <p>{s.assignment.title}</p>
+            <div key={s.id} className="border p-3">
+              <p>{s.studentName}</p>
+              <Button onClick={() => openPdf(s.fileUrl, "Submission")}>View</Button>
 
-              <Button onClick={() => openPdf(s.fileUrl, "Submission")}>
-                View PDF
-              </Button>
+              <Input placeholder="Score" onChange={(e) => setEvalScore(e.target.value)} />
+              <Textarea placeholder="Feedback" onChange={(e) => setEvalFeedback(e.target.value)} />
 
-              <Input
-                placeholder="Score"
-                value={evalScore}
-                onChange={(e) => setEvalScore(e.target.value)}
-              />
-
-              <Textarea
-                placeholder="Feedback"
-                value={evalFeedback}
-                onChange={(e) => setEvalFeedback(e.target.value)}
-              />
-
-              <Button onClick={() => handleEvaluate(s.id)}>
-                Save
+              <Button onClick={() => evaluateSubmission(s.id, Number(evalScore), evalFeedback)}>
+                Submit
               </Button>
             </div>
           ))}
-        </>
+        </div>
       )}
 
       {/* PDF MODAL */}
@@ -294,6 +192,7 @@ export function AdminTrainerLMS({ role }: Props) {
           onClose={() => setPdfViewer(null)}
         />
       )}
+
     </div>
   );
 }

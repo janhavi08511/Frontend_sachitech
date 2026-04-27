@@ -9,19 +9,14 @@ interface Props {
 
 export function PdfViewerModal({ filename, title, onClose }: Props) {
   const [error, setError] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   const openInNewTab = () => {
     window.open(filename, "_blank");
   };
 
-  // ✅ Use Google Viewer for reliability
-  const viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(
-    filename
-  )}&embedded=true`;
-
   return (
     <div className="fixed inset-0 z-50 bg-black/70 flex flex-col">
+      
       {/* Header */}
       <div className="flex items-center justify-between bg-gray-900 text-white px-4 py-3">
         <span className="text-sm truncate max-w-lg">{title}</span>
@@ -37,13 +32,7 @@ export function PdfViewerModal({ filename, title, onClose }: Props) {
       </div>
 
       {/* Viewer */}
-      <div className="flex-1 bg-gray-800 relative">
-        {loading && (
-          <div className="absolute inset-0 flex items-center justify-center text-white">
-            Loading PDF...
-          </div>
-        )}
-
+      <div className="flex-1 bg-gray-800">
         {error ? (
           <div className="flex flex-col items-center justify-center h-full text-white gap-4">
             <p>Failed to load PDF</p>
@@ -56,13 +45,9 @@ export function PdfViewerModal({ filename, title, onClose }: Props) {
           </div>
         ) : (
           <iframe
-            src={viewerUrl}
+            src={filename}
             className="w-full h-full"
-            onLoad={() => setLoading(false)}
-            onError={() => {
-              setError(true);
-              setLoading(false);
-            }}
+            onError={() => setError(true)}
           />
         )}
       </div>
