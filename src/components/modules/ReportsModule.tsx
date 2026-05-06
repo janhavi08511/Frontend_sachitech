@@ -28,6 +28,7 @@ export function ReportsModule() {
   const [revenueReport, setRevenueReport] = useState<any[]>([]);
   const [courseReport, setCourseReport] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadAll();
@@ -35,6 +36,7 @@ export function ReportsModule() {
 
   const loadAll = async () => {
     setLoading(true);
+    setError(null);
     try {
       const [s, st, rv, cr] = await Promise.all([
         getReportSummary(),
@@ -78,8 +80,16 @@ export function ReportsModule() {
         }))
       );
 
-    } catch (e) {
+    } catch (e: any) {
       console.error("Report load error:", e);
+      const status = e?.response?.status;
+      if (status === 403 || status === 401) {
+        setError("Access denied. Please log in as Admin.");
+      } else if (status === 400) {
+        setError("Server error loading reports. Please try again.");
+      } else {
+        setError("Failed to load reports. Check your connection.");
+      }
     } finally {
       setLoading(false);
     }
@@ -93,6 +103,15 @@ export function ReportsModule() {
     : [];
 
   if (loading) return <p className="text-center py-10">Loading...</p>;
+
+  if (error) return (
+    <div className="text-center py-16 space-y-4">
+      <p className="text-red-500 font-medium">{error}</p>
+      <Button onClick={loadAll} variant="outline">
+        <RefreshCw className="w-4 h-4 mr-2" /> Retry
+      </Button>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
