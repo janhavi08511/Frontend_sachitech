@@ -216,9 +216,13 @@ export function UserManagement() {
 
     } catch (error: any) {
 
-      console.error(error);
+      console.error("Delete error:", error?.response?.data);
 
-      const msg = error?.response?.data?.error || "Delete failed";
+      const msg =
+        error?.response?.data?.rootCause ||
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        "Delete failed";
 
       toast.error(msg);
     }
