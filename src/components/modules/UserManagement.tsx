@@ -5,7 +5,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Checkbox } from "../ui/checkbox";
 
-import { toast } from "sonner";
+import { toast, Toaster } from "sonner";
 
 import {
   Table,
@@ -210,15 +210,17 @@ export function UserManagement() {
 
       await deleteUser(id);
 
-      toast.success("User deleted");
+      toast.success("User deleted successfully");
 
       await fetchUsers();
 
-    } catch (error) {
+    } catch (error: any) {
 
       console.error(error);
 
-      toast.error("Delete failed");
+      const msg = error?.response?.data?.error || "Delete failed";
+
+      toast.error(msg);
     }
   };
 
@@ -252,6 +254,8 @@ export function UserManagement() {
 
   return (
     <div className="min-h-screen bg-[#fbfff1] p-6 space-y-6">
+
+      <Toaster richColors position="top-right" />
 
       {/* HEADER */}
 
