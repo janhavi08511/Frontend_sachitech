@@ -27,9 +27,9 @@ export const addInternship = async (data: any) => {
   return await API.post("/api/admin/add-internship", data);
 };
 
-export const getUsers = async () => {
-  const res = await API.get("/api/admin/users");
-  return res.data;
+export const getUsers = async (page = 0, size = 20) => {
+  const res = await API.get(`/api/admin/users?page=${page}&size=${size}`);
+  return res.data; // { content, totalElements, totalPages, page, size }
 };
 
 export const deleteUser = (id: number) =>
@@ -44,8 +44,8 @@ export const updateStatus = async (id: number, status: string) => {
 };
 
 export const getTrainers = async () => {
-  const res = await API.get("/api/admin/users");
-  return res.data.filter((u: any) => u.role === "TRAINER");
+  const res = await API.get("/api/admin/users?page=0&size=200");
+  return (res.data.content ?? []).filter((u: any) => u.role === "TRAINER");
 };
 
 export const resetPassword = async (id: number, newPassword: string) => {

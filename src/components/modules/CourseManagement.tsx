@@ -101,9 +101,14 @@ export function CourseManagement() {
 
   // ================= DELETE =================
   const handleDelete = async (id: number) => {
-    await deleteCourse(id);
-    setCourses(prev => prev.filter(c => c.id !== id));
-    toast.success("Deleted");
+    try {
+      await deleteCourse(id);
+      setCourses(prev => prev.filter(c => c.id !== id));
+      toast.success("Course deleted");
+    } catch (error: any) {
+      const msg = error?.response?.data?.error || "Failed to delete course";
+      toast.error(msg);
+    }
   };
 
   return (

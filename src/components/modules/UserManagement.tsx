@@ -43,6 +43,11 @@ export function UserManagement() {
 
   const [search, setSearch] = useState("");
 
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const PAGE_SIZE = 20;
+
   const [open, setOpen] = useState(false);
 
   const [form, setForm] = useState({
@@ -58,19 +63,22 @@ export function UserManagement() {
 
   // ================= FETCH USERS =================
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (p = page) => {
 
     setLoading(true);
 
     try {
 
-      const data = await getUsers();
+      const data = await getUsers(p, PAGE_SIZE);
 
       console.log("USERS API:", data);
 
-      if (Array.isArray(data)) {
+      if (data?.content && Array.isArray(data.content)) {
 
-        setUsers(data);
+        setUsers(data.content);
+        setTotalPages(data.totalPages ?? 0);
+        setTotalElements(data.totalElements ?? 0);
+        setPage(p);
 
       } else {
 
@@ -380,6 +388,44 @@ export function UserManagement() {
         </CardContent>
 
       </Card>
+
+      {/* PAGINATION */}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-1">
+
+          <p className="text-sm text-gray-500">
+            Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalElements)} of {totalElements} users
+          </p>
+
+          <div className="flex gap-2">
+
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === 0}
+              onClick={() => fetchUsers(page - 1)}
+            >
+              Previous
+            </Button>
+
+            <span className="flex items-center px-3 text-sm">
+              Page {page + 1} of {totalPages}
+            </span>
+
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages - 1}
+              onClick={() => fetchUsers(page + 1)}
+            >
+              Next
+            </Button>
+
+          </div>
+
+        </div>
+      )}
 
       {/* CREATE USER MODAL */}
 
